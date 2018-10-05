@@ -6,7 +6,7 @@ Dir.glob("test#{ARGV[0]}*.rb").sort.each do |f|
   answer = `ruby #{MY_PROGRAM} #{f}`
 
   if correct == answer
-    puts answer
+    # puts answer
     puts "\e[32m#{f} => OK!\e[0m"
   elsif f == "test4-4.rb"
     puts "\e[33m#{f} => SKIP!\e[0m"

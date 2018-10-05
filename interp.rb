@@ -112,17 +112,31 @@ def evaluate(exp, env, fdenv)
 
   # You don't need advices anymore, do you?
   when "ary_new"
-    raise(NotImplementedError) # Problem 6
+    ary = {}
+    exp[1..-1].each_with_index do |_exp, i|
+      ary[i] = evaluate(_exp, env, fdenv)
+    end
 
+    ary
   when "ary_ref"
-    raise(NotImplementedError) # Problem 6
+    ary = evaluate(exp[1], env, fdenv)
+    idx = evaluate(exp[2], env, fdenv)
 
+    ary[idx]
   when "ary_assign"
-    raise(NotImplementedError) # Problem 6
+    ary = evaluate(exp[1], env, fdenv)
+    target_idx = evaluate(exp[2], env, fdenv)
+    assign_val = evaluate(exp[3], env, fdenv)
 
+    ary[target_idx] = assign_val
   when "hash_new"
-    raise(NotImplementedError) # Problem 6
+    hsh = {}
+    exp[1..-1].each_slice(2) do |_key, _exp|
+      key = evaluate(_key, env, fdenv)
+      hsh[key] = evaluate(_exp, env, fdenv)
+    end
 
+    hsh
   else
     p("error")
     pp(exp)
