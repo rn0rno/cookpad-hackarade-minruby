@@ -31,6 +31,7 @@ The target language (which our interpreter runs a program written in) and the ho
 
 An abstract syntax tree (AST) is a "tree" representation of a program.  For example, we can represent a program text "`1 + 2 * 3`" as the following tree structure:
 
+```
       (+)
       / \
      /   \
@@ -38,6 +39,7 @@ An abstract syntax tree (AST) is a "tree" representation of a program.  For exam
          / \
         /   \
        2     3
+```
 
 This tree can be encoded in a data structure of Ruby arrays:
 
