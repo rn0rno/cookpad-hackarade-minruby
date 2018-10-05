@@ -31,28 +31,14 @@ def evaluate(exp, env)
 #
 
   when "stmts"
-    # Statements: sequential evaluation of one or more expressions.
-    #
-    # Advice 1: Insert `pp(exp)` and observe the AST first.
-    # Advice 2: Apply `evaluate` to each child of this node.
-    raise(NotImplementedError) # Problem 2
-
-  # The second argument of this method, `env`, is an "environement" that
-  # keeps track of the values stored to variables.
-  # It is a Hash object whose key is a variable name and whose value is a
-  # value stored to the corresponded variable.
-
+    exp[1..-1].each do |_exp|
+      evaluate(_exp, env)
+    end
   when "var_ref"
-    # Variable reference: lookup the value corresponded to the variable
-    #
-    # Advice: env[???]
-    raise(NotImplementedError) # Problem 2
+    env[exp[1]]
 
   when "var_assign"
-    # Variable assignment: store (or overwrite) the value to the environment
-    #
-    # Advice: env[???] = ???
-    raise(NotImplementedError) # Problem 2
+    env[exp[1]] = evaluate(exp[2], env)
 
 
 #
@@ -69,6 +55,7 @@ def evaluate(exp, env)
     #   else
     #     ???
     #   end
+
     raise(NotImplementedError) # Problem 3
 
   when "while"
