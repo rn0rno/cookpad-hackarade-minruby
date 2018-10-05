@@ -3,7 +3,7 @@ require "minruby"
 MY_PROGRAM = 'interp.rb'
 Dir.glob("test#{ARGV[0]}*.rb").sort.each do |f|
   correct = `ruby #{f}`
-  answer = `ruby #{MY_PROGRAM} #{f}`
+  answer = `ruby -rminruby #{MY_PROGRAM} #{MY_PROGRAM} #{MY_PROGRAM} #{f}`
 
   if correct == answer
     # puts answer

@@ -1,80 +1,61 @@
-require "minruby"
-
 # An implementation of the evaluator
-def evaluate(exp, env, fdenv)
+def evaluate(exp, env, fdefs)
   # exp: A current node of AST
   # env: An environment (explained later)
-
   case exp[0]
-
-#
-## Problem 1: Arithmetics
-#
-
   when "lit"
-    exp[1] # return the immediate value as is
-
+    exp[1]
   when "+"
-    evaluate(exp[1], env, fdenv) + evaluate(exp[2], env, fdenv)
+    evaluate(exp[1], env, fdefs) + evaluate(exp[2], env, fdefs)
   when "-"
-    evaluate(exp[1], env, fdenv) - evaluate(exp[2], env, fdenv)
+    evaluate(exp[1], env, fdefs) - evaluate(exp[2], env, fdefs)
   when "*"
-    evaluate(exp[1], env, fdenv) * evaluate(exp[2], env, fdenv)
+    evaluate(exp[1], env, fdefs) * evaluate(exp[2], env, fdefs)
   when "%"
-    evaluate(exp[1], env, fdenv) % evaluate(exp[2], env, fdenv)
+    evaluate(exp[1], env, fdefs) % evaluate(exp[2], env, fdefs)
   when "/"
-    evaluate(exp[1], env, fdenv) / evaluate(exp[2], env, fdenv)
+    evaluate(exp[1], env, fdefs) / evaluate(exp[2], env, fdefs)
   when "<"
-    evaluate(exp[1], env, fdenv) < evaluate(exp[2], env, fdenv)
+    evaluate(exp[1], env, fdefs) < evaluate(exp[2], env, fdefs)
   when ">"
-    evaluate(exp[1], env, fdenv) > evaluate(exp[2], env, fdenv)
+    evaluate(exp[1], env, fdefs) > evaluate(exp[2], env, fdefs)
   when "=="
-    evaluate(exp[1], env, fdenv) == evaluate(exp[2], env, fdenv)
-
-#
-## Problem 2: Statements and variables
-#
-
+    evaluate(exp[1], env, fdefs) == evaluate(exp[2], env, fdefs)
+  when "!="
+    evaluate(exp[1], env, fdefs) != evaluate(exp[2], env, fdefs)
   when "stmts"
     rtn = nil
-    exp[1..-1].each do |_exp|
-      rtn = evaluate(_exp, env, fdenv)
+    idx = 1
+    while exp[idx] != nil
+      _exp = exp[idx]
+      rtn = evaluate(_exp, env, fdefs)
+      idx = idx + 1
     end
-
     rtn
   when "var_ref"
     env[exp[1]]
-
   when "var_assign"
-    env[exp[1]] = evaluate(exp[2], env, fdenv)
-
-
-#
-## Problem 3: Branchs and loops
-#
-
+    env[exp[1]] = evaluate(exp[2], env, fdefs)
   when "if"
-    evaluate(exp[1], env, fdenv) ? evaluate(exp[2], env, fdenv) : evaluate(exp[3], env, fdenv)
-
+    if evaluate(exp[1], env, fdefs)
+      evaluate(exp[2], env, fdefs)
+    else
+      evaluate(exp[3], env, fdefs)
+    end
   when "while"
-    evaluate(exp[2], env, fdenv) while evaluate(exp[1], env, fdenv)
-
-#
-## Problem 4: Function calls
-#
-
+    while evaluate(exp[1], env, fdefs) do
+      evaluate(exp[2], env, fdefs)
+    end
   when "func_call"
-    # Lookup the function definition by the given function name.
-    func = $function_definitions[exp[1]]
-
-    if func.nil?
+    func = fdefs[exp[1]]
+    if func == nil
       case exp[1]
       when "p"
-        p(evaluate(exp[2], env, fdenv))
+        p(evaluate(exp[2], env, fdefs))
       when "Integer"
-        evaluate(exp[2], env, fdenv).to_i
+        Integer(evaluate(exp[2], env, fdefs))
       when "fizzbuzz"
-        num = evaluate(exp[2], env, fdenv)
+        num = evaluate(exp[2], env, fdefs)
         if num % 15 == 0
           "fizzbuzz"
         elsif num % 3 == 0
@@ -84,58 +65,56 @@ def evaluate(exp, env, fdenv)
         else
           num
         end
+      when "minruby_parse"
+        minruby_parse(evaluate(exp[2], env, fdefs))
+      when "minruby_load"
+        minruby_load()
       else
         raise("unknown builtin function")
       end
     else
-      tmp_fdenv = fdenv
-      fdenv = {}
-      if exp[2..-1].size == func[0].size
-        exp[2..-1].each_with_index do |_exp, i|
-          fdenv[func[0][i]] = Integer(evaluate(_exp, env, tmp_fdenv))
-        end
-
-        k = evaluate(func[1], fdenv, {})
-        fdenv = tmp_fdenv
-        k
-      else
-        raise("引数の個数が違います")
+      local_env = {}
+      # TODO: argument size error
+      idx = 2
+      while exp[idx] != nil
+        _exp = exp[idx]
+        local_env[func[0][idx-2]] = evaluate(_exp, env, fdefs)
+        idx = idx + 1
       end
+      evaluate(func[1], local_env, fdefs)
     end
-
   when "func_def"
-    $function_definitions[exp[1]] = [exp[2], exp[3]]
-
-#
-## Problem 6: Arrays and Hashes
-#
-
-  # You don't need advices anymore, do you?
+    fdefs[exp[1]] = [exp[2], exp[3]]
   when "ary_new"
     ary = {}
-    exp[1..-1].each_with_index do |_exp, i|
-      ary[i] = evaluate(_exp, env, fdenv)
+    idx = 1
+    while exp[idx] != nil
+      _exp = exp[idx]
+      ary[idx-1] = evaluate(_exp, env, fdefs)
+      idx = idx + 1
     end
-
     ary
   when "ary_ref"
-    ary = evaluate(exp[1], env, fdenv)
-    idx = evaluate(exp[2], env, fdenv)
-
-    ary[idx]
+    ary = evaluate(exp[1], env, fdefs)
+    idx = evaluate(exp[2], env, fdefs)
+    if ary == nil
+      nil
+    else
+      ary[idx]
+    end
   when "ary_assign"
-    ary = evaluate(exp[1], env, fdenv)
-    target_idx = evaluate(exp[2], env, fdenv)
-    assign_val = evaluate(exp[3], env, fdenv)
-
+    ary = evaluate(exp[1], env, fdefs)
+    target_idx = evaluate(exp[2], env, fdefs)
+    assign_val = evaluate(exp[3], env, fdefs)
     ary[target_idx] = assign_val
   when "hash_new"
     hsh = {}
-    exp[1..-1].each_slice(2) do |_key, _exp|
-      key = evaluate(_key, env, fdenv)
-      hsh[key] = evaluate(_exp, env, fdenv)
+    idx = 1
+    while exp[idx] != nil
+      key = evaluate(exp[idx], env, fdefs)
+      hsh[key] = evaluate(exp[idx+1], env, fdefs)
+      idx = idx + 2
     end
-
     hsh
   else
     p("error")
@@ -145,10 +124,10 @@ def evaluate(exp, env, fdenv)
 end
 
 
-$function_definitions = {}
+fdefs = {}
 env = {}
 fdenv = {}
 
 # `minruby_load()` == `File.read(ARGV.shift)`
 # `minruby_parse(str)` parses a program text given, and returns its AST
-evaluate(minruby_parse(minruby_load()), env, fdenv)
+evaluate(minruby_parse(minruby_load()), env, fdefs)
